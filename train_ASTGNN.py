@@ -182,15 +182,11 @@ def train_main(alpha, counter,patience,temperature):
             #llm global-local
             pre_features,pre_weight_sample1 = global_local(pre_weight_sample1,pre_features, weight_sample, features_Z, presave_ratio,epoch,batch_index)
 
-            # print('weight_sample',weight_sample,'weight_sample1',weight_sample1)# 1.002 & 0.0083
-            ## loss: bxNxTxd ---- NxbxTxd
-            # all_weight_sample1 = all_weight_sample1[0:n1, :]
+     
+
             n1 = features_Z.size(0)
             loss = criterion_train(outputs, labels)  ## n,N,T,d
-            # loss1 = masked_mape2(outputs, labels, 0)
-            # loss = criterion(outputs, labels)
-            # loss = huber(labels, outputs, 0.4)
-            # weight_node = torch.sum(weight_nodeNN*(torch.from_numpy(adj_mx).cuda()), dim=1)
+    
             weight_node = 1 / torch.sum(weight_nodeNN * ((torch.from_numpy(adj_mx).cuda() + alpha*I)), dim=1)
             weight_node = weight_node.float()
             loss = torch.matmul(torch.matmul(loss.permute(1, 2, 3, 0), softmax(weight_sample[0:n1, :])).permute(1, 3, 2, 0),
@@ -232,132 +228,6 @@ def train_main(alpha, counter,patience,temperature):
     return best_val_loss
 
 
-
-    # # fine tune the model
-    # optimizer = optim.Adam(net.parameters(), lr=learning_rate*0.1)
-    # optimizerbl_n = optim.Adam([weight_nodeNN], lr=learning_rate*0.1)  # 定义优化器，传入所有网络参数
-    # optimizerbl_s = optim.Adam([weight_sample], lr=learning_rate * 0.1)
-    #
-    # for epoch in range(epochs, epochs+fine_tune_epochs):
-    #     print('fine tune the model ... ', flush=True)
-    #
-    #     params_filename = os.path.join(params_path,'temp%s_epoch_%s.params' % (temperature,epoch))
-    #     params_filename_best = os.path.join(params_path,'temp%s_epoch_%s_best_partition%s.params' % (temperature,epoch, filename))
-    #
-    #     net.train()  # ensure dropout layers are in train mode
-    #     train_start_time = time()
-    #
-    #     for batch_index, batch_data in enumerate(train_loader):
-    #
-    #         encoder_inputs, decoder_inputs, labels = batch_data
-    #
-    #         encoder_inputs = encoder_inputs.transpose(-1, -2)  # (B, N, T, F)
-    #
-    #         decoder_inputs = decoder_inputs.unsqueeze(-1)  # (B, N, T, 1)
-    #
-    #         labels = labels.unsqueeze(-1)
-    #         predict_length = labels.shape[2]  # T
-    #
-    #         optimizer.zero_grad()
-    #         encoder_output = net.encode(encoder_inputs)
-    #
-    #         # 计算infoNCE_loss
-    #         # loss_NCE = net.get_supCR_loss(encoder_inputs,labels,encoder_output)
-    #         ## node eange ends
-    #
-    #         # decode
-    #         decoder_start_inputs = decoder_inputs[:, :, :1, :]
-    #         decoder_input_list = [decoder_start_innohup python trian  puts]
-    #
-    #         for step in range(predict_length):
-    #             decoder_inputs = torch.cat(decoder_input_list, dim=2)
-    #             features_Z,predict_output = net.decode(decoder_inputs, encoder_output)
-    #             decoder_input_list = [decoder_start_inputs, predict_output]
-    #         all_feature = torch.cat([features_Z, pre_features.detach()], dim=0)
-    #
-    #
-    #         for epoch2 in range(0,epochb):
-    #             all_weight_sample = torch.cat((weight_sample, pre_weight_sample1.detach()), dim=0)
-    #             optimizerbl_n.zero_grad()
-    #             optimizerbl_s.zero_grad()
-    #             # weight_node = torch.sum(weight_nodeNN*(torch.from_numpy(adj_mx).cuda()), dim=1)
-    #             weight_node = 1 / torch.sum(weight_nodeNN * ((torch.from_numpy(adj_mx).cuda() + I)), dim=1)
-    #             loss_reweighting_n = lossb_expect(temperature,adj_mx,features_Z, softmax(weight_node), num_f=num_of_RFF, sum=True)
-    #             loss_reweighting_s = lossb_expect(temperature, adj_mx, features_Z, softmax(weight_sample), num_f=num_of_RFF,
-    #                                             sum=True)
-    #
-    #             loss_reweighting_s.backward(retain_graph=True)
-    #             optimizerbl_s.step()
-    #             loss_reweighting_n.backward(retain_graph=True)
-    #             optimizerbl_n.step()
-    #
-    #
-    #             # torch.save(
-    #             #     {'epoch': epoch, 'weight_node': weight_node, 'weight_sample': weight_sample,
-    #             #      'epochb': epoch2, 'batch_index': batch_index,
-    #             #      'opt_state_dict': optimizer.state_dict(), 'optbl_s_state_dict': optimizerbl_s.state_dict()},
-    #             #     os.path.join(params_path, 'epoch%s_batch%s_epochb_%s_best.pth' % (epoch, batch_index, epoch1)))
-    #
-    #             # print("epoch:", str(epoch), ",batch_index:", str(batch_index), ",epoch1:", str(
-    #             #     epoch1), ",loss_reweighting_s:", loss_reweighting_s.detach().cpu().numpy())
-    #         pre_features,pre_weight_sample1 = global_local(pre_weight_sample1,pre_features, weight_sample, features_Z, presave_ratio,epoch,batch_index)
-    #         n1 = features_Z.size(0)
-    #         ## loss: bxNxTxd ---- NxTxdxb---TxbxdxN
-    #         loss = criterion_train(predict_output, labels)
-    #         # loss1 = masked_mape2(predict_output, labels, 0)
-    #         # loss = 0.5 * (loss0 + 100 * loss1)
-    #         # loss = huber(labels, outputs, 0.4)
-    #         # weight_node = torch.sum(weight_nodeNN*(torch.from_numpy(adj_mx).cuda()), dim=1)
-    #         # weight_node = 1 / torch.sum(weight_nodeNN * ((torch.from_numpy(adj_mx).cuda() + I)), dim=1)
-    #         loss = (torch.matmul(torch.matmul(loss.permute(1, 2, 3, 0), softmax(weight_sample[0:n1, :])).permute(1, 3, 2, 0),
-    #             softmax(weight_node)))
-    #         loss = torch.mean(loss)
-    #         # print("epoch:", epoch, "____loss:", loss, "____loss_NCE:", loss_NCE,  "___tempreture",net.temperature)
-    #         # loss = loss+0.02*loss_NCE
-    #         loss.backward()
-    #         optimizer.step()
-    #         training_loss = loss.item()
-    #         # global_step = global_step + 1
-    #     sw.add_scalar('training_loss', training_loss, epoch)
-    #
-    #     print('epoch: %s, train time every whole data:%.2fs' % (epoch, time() - train_start_time), flush=True)
-    #     print('epoch: %s, total time:%.2fs' % (epoch, time() - start_time), flush=True)
-    #
-    #     # apply model on the validation data set
-    #     val_loss = compute_val_loss(net, val_loader, weight_sample,weight_node,criterion_train,sw, epoch)
-    #     torch.save(net.state_dict(), params_filename)
-    #     if val_loss < best_val_loss:
-    #         counter = 0
-    #         best_val_loss = val_loss
-    #         best_epoch = epoch
-    #     else:
-    #         counter += 1
-    #         torch.save(net.state_dict(), params_filename_best)
-    #         # torch.save(
-    #         #     {'epoch': epoch, 'weight_node': weight_node, 'weight_sample': weight_sample,
-    #         #      'temperature': temperature,
-    #         #      'opt_state_dict': optimizer.state_dict(), 'optbl_s_state_dict': optimizerbl_s.state_dict()},
-    #         #     os.path.join(params_path, 'temp%s_epochb_%s_best.pth' % (temperature,epoch)))
-    #
-    #     if counter >= patience and epoch >= 40:
-    #         print("early stopping after 40 epoch")
-    #         break
-    #
-    #     mae, rmse, mape = predict_main(temperature, epoch, test_loader0, test_target_tensor0, _max, _min, 'test')
-    #     mae1, rmse1, mape1 = predict_main1(temperature, epoch, test_loader1, test_target_tensor1, _max, _min, 'test1')
-    #     mae2, rmse2, mape2 = predict_main2(temperature, epoch, test_loader2, test_target_tensor2, _max, _min, 'test2')
-    #     mae3, rmse3, mape3 = predict_main3(temperature,epoch, test_loader3, test_target_tensor3, _max, _min, 'test3')
-    #     output = ("%d,%.4f, " + "mae:" + "%.4f,%.4f,%.4f,%.4f, " + "rmse:" + "%.4f,%.4f,%.4f,%.4f, " + "mape:" + "%.4f,%.4f,%.4f,%.4f") % (
-    #     epoch, val_loss, mae, mae1, mae2, mae3, rmse, rmse1, rmse2, rmse3, mape, mape1, mape2, mape3)
-    #     with open(loss_txt, 'a+') as f:
-    #         f.write(output + '\n')
-    #         f.close()
-    # with open(loss_txt, 'a+') as f:
-    #     f.write('best_epoch: %d' % best_epoch + '\n')
-    #     f.close()
-    # print('best epoch:', best_epoch, flush=True)
-    # print('apply the best val model on the test data set ...', flush=True)
-    # return best_val_loss
 
 def predict_main(temperature, epoch, data_loader, data_target_tensor, _max, _min, type):
     '''
