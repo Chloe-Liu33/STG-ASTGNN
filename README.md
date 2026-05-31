@@ -24,9 +24,9 @@ This project provides an end-to-end causality-based spatiotemporal Out-of-Distri
 It aims at solving OOD situations in **zero-shot cross-region traffic prediction**. By explicitly considering the morphological diversity (variations in traffic network topologies) in traffic networks, our model achieves robust generalization capabilities, enabling accurate predictions even in entirely unseen regions.
 
 ### ✨ Key Contributions
-* **Spatiotemporal Weighting:** A causality-based module designed to reduce redundant and spurious feature correlations stemming from graph topology and traffic patterns[cite: 80].
-* **Graph Matching & Equal-Sized Partitioning:** Mitigates the spatial shift between source and target networks, and aligns the scale of the networks[cite: 81].
-* **State-of-the-art Performance:** Achieves a maximum reduction in MAE of **33.08%** across morphological diversity situations and decreases MAE by up to **40.58%** compared to other OOD-driven baselines[cite: 8, 9].
+* **Spatiotemporal Weighting:** A causality-based module designed to reduce redundant and spurious feature correlations stemming from graph topology and traffic patterns.
+* **Graph Matching & Equal-Sized Partitioning:** Mitigates the spatial shift between source and target networks, and aligns the scale of the networks.
+* **State-of-the-art Performance:** Achieves a maximum reduction in MAE of **33.08%** across morphological diversity situations and decreases MAE by up to **40.58%** compared to other OOD-driven baselines.
 
 ## 🧠 Model Architecture
 
